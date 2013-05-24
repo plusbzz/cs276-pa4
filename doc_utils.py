@@ -48,7 +48,12 @@ class DocUtils(object):
         
         return (X,y)
   
-  
+    @staticmethod
+    def extractX_pairWise(query_url_file):
+        X,queries,X_index_map = DocUtils.extractX_pointWise(query_url_file)
+        # Scale X
+        X = preprocessing.scale(X)
+        return (X,queries,X_index_map)
 
     @staticmethod
     def extractXy_pointWise(query_url_file, query_url_relevance_file):
@@ -67,6 +72,7 @@ class DocUtils(object):
             y.append(relevances[query.string][page.url])
             
         return (X,y)
+
 
     @staticmethod
     def extractX_pointWise(query_url_file):

@@ -14,29 +14,19 @@ from doc_utils import DocUtils, Query
 ###############################
 def pointwise_train_features(train_data_file, train_rel_file):
   X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file)
-  
-  print >> sys.stderr, "X: ", str(X)
-  print >> sys.stderr, "y: ", str(y)
-
   return (X, y)
  
 def pointwise_test_features(test_data_file):
-  # stub, you need to implement
   X,queries,index_map = DocUtils.extractX_pointWise(test_data_file)
-
   return (X, queries, index_map)
  
 def pointwise_learning(X, y):
-  # stub, you need to implement
   model = linear_model.LinearRegression()
   model.fit(X,y)
-  
   return model
 
 def pointwise_testing(X, model):
-  # stub, you need to implement
-  y = model.predict(X)
-  
+  y = model.predict(X) 
   return y
 
 ##############################
@@ -44,29 +34,20 @@ def pointwise_testing(X, model):
 ##############################
 def pairwise_train_features(train_data_file, train_rel_file):
   X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file)
-  
-  print >> sys.stderr, "X: ", str(X)
-  print >> sys.stderr, "y: ", str(y)
-
   return (X, y)
  
 def pairwise_test_features(test_data_file):
-  # stub, you need to implement
-  X = [[0.5, 0.5], [1.5, 1.5]]  
-  queries = ['query1', 'query2']
-  # index_map[query][url] = i means X[i] is the feature vector of query and url
-  index_map = {'query1' : {'url1':0}, 'query2': {'url2':1}}
-
+  X,queries,index_map = DocUtils.extractX_pairWise(test_data_file)
   return (X, queries, index_map)
 
 def pairwise_learning(X, y):
-  # stub, you need to implement
   model = svm.SVC(kernel='linear', C=1.0)
+  model.fit(X,y)
   return model
 
 def pairwise_testing(X, model):
-  # stub, you need to implement
-  y = [0.5, 1.5]
+  weights = model.coef_.T
+  y = np.dot(X,weights)
   return y
 
 ####################
