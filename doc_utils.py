@@ -38,6 +38,51 @@ class DocUtils(object):
             y.append(relevances[query.string][page.url])
             
         return (X,y)
+
+    @staticmethod
+    def extractX_pointWise(query_url_file):
+        print >> sys.stderr, "TEST FILE: ", str(query_url_file)
+
+        X         = []
+        queries   = []
+        X_index_map = {}
+        count     = 0
+       
+        (q,features) = DocUtils.extractFeatures(query_url_file)
+        queryObjects = [Query(query,features[query]) for query in features]
+        
+        for query in queryObjects:
+          query_tf = np.array(query.query_tf_vector)
+          #print >> sys.stderr, "query: " + query.string
+          #print >> sys.stderr, "query_terms: " + str(query.terms)
+          #print >> sys.stderr, "query_tf: " + str(query_tf)
+          queries.append(query.string)
+          X_index_map[query.string] = {}
+          
+          for page in query.pages:
+            url_tf    = np.array(page.get_field_tf('url',query.terms))
+            #print >> sys.stderr, "url_tf: " + str(url_tf)
+            title_tf  = np.array(page.get_field_tf('title',query.terms))
+            #print >> sys.stderr, "title_tf: " + str(title_tf)            
+            header_tf = np.array(page.get_field_tf('header',query.terms))
+            #print >> sys.stderr, "header_tf: " + str(header_tf)            
+            body_tf   = np.array(page.get_field_tf('body',query.terms))
+            #print >> sys.stderr, "body_tf: " + str(body_tf)            
+            anchor_tf = np.array(page.get_field_tf('anchor',query.terms))
+            #print >> sys.stderr, "anchor_tf: " + str(anchor_tf)            
+            
+            x_row = np.array([np.dot(query_tf,url_tf),
+                              np.dot(query_tf,title_tf),
+                              np.dot(query_tf,header_tf),
+                              np.dot(query_tf,body_tf),
+                              np.dot(query_tf,anchor_tf)])
+            
+            X.append(x_row)
+            X_index_map[query.string][page.url] = count
+            count = count + 1
+            
+        return (X,queries,X_index_map)
+
     
     #inparams
     #  featureFile: input file containing relevances per query-url
@@ -201,6 +246,17 @@ class Query(object):
 
     def __init__(self,query,query_pages,corpus=None):  # query_pages : query -> urls
         self.string = query
-        self.terms = self.string.lower().strip().split()
-        self.query_tf_vector = [v for k,v in DocUtils.compute_tf_vector(self.terms).iteritems()]
+        raw_terms = self.string.lower().strip().split() # it may include repeated terms
+        #print >> sys.stderr, "query.terms: " + str(raw_terms)
+        
+        tf_vector_dict = DocUtils.compute_tf_vector(raw_terms)
+        
+        self.terms           = []
+        self.query_tf_vector = []
+        
+        for k,v in tf_vector_dict.iteritems():
+            self.terms.append(k)
+            self.query_tf_vector.append(v)
+        
+        #print >> sys.stderr, "query.query_tf_vector: " + str(self.query_tf_vector)
         self.pages = [Page(p,v) for p,v in query_pages.iteritems()]

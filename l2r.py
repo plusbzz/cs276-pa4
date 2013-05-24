@@ -14,18 +14,18 @@ from doc_utils import DocUtils, Query
 def pointwise_train_features(train_data_file, train_rel_file):
   X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file)
   
-  print >> sys.stderr, "X: ", str(X)
-  print >> sys.stderr, "y: ", str(y)
+  #print >> sys.stderr, "X: ", str(X)
+  #print >> sys.stderr, "y: ", str(y)
 
   return (X, y)
  
 def pointwise_test_features(test_data_file):
   # stub, you need to implement
-  X = [[0.5, 0.5], [1.5, 1.5]]  
-  queries = ['query1', 'query2']
+  X,queries,index_map = DocUtils.extractX_pointWise(test_data_file)
   
-  # index_map[query][url] = i means X[i] is the feature vector of query and url
-  index_map = {'query1' : {'url1':0}, 'query2': {'url2':1}}
+  #print >> sys.stderr, "X: ", str(X)
+  #print >> sys.stderr, "queries: ", str(queries)
+  #print >> sys.stderr, "index_map: ", str(index_map)
 
   return (X, queries, index_map)
  
@@ -38,7 +38,8 @@ def pointwise_learning(X, y):
 
 def pointwise_testing(X, model):
   # stub, you need to implement
-  y = [0.5, 1.5]
+  y = model.predict(X)
+  
   return y
 
 ##############################
@@ -118,6 +119,7 @@ def test(test_data_file, model, task):
     
     # Step (2): implement your prediction code here
     y = pointwise_testing(X, model)
+    
   elif task == 2:
     # Step (1): construct your test feature arrays here
     (X, queries, index_map) = pairwise_test_features(test_data_file)
@@ -157,8 +159,6 @@ if __name__ == '__main__':
   test_data_file = sys.argv[3]
   task = int(sys.argv[4])
   print >> sys.stderr, "### Running task", task, "..."
- 
   
   model = train(train_data_file, train_rel_file, task)
-  
   test(test_data_file, model, task)
