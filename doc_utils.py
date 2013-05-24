@@ -8,7 +8,32 @@ import types
 import cPickle as marshal
 
 class DocUtils(object):
-    
+    @staticmethod
+    def extractXy_pairwise(query_url_file, query_url_relevance_file):
+        X = []
+        y = []
+       
+        (q,features) = DocUtils.extractFeatures(query_url_file)
+        queries      = [Query(query,features[query]) for query in features]
+        relevances   = DocUtils.extractRelevances(query_url_relevance_file)        
+        
+        for query in queries:
+            X_q = []
+            y_q = []
+            query_tf = np.array(query.query_tf_vector)
+          
+            for page in query.pages:
+              X_q.append(DocUtils.compute_x_row(query.terms,query_tf,page))
+              y_q.append(relevances[query.string][page.url])
+            
+            # Now do the pairwise
+            for i,j in combinations(xrange(len(y)),2):
+                if y_q[i] != y_q[j]:
+                    X.append(X_q[i] - X_q[j])
+                    y.append(1 if y_q[i] > y_q[j] else -1)
+        return (X,y)
+  
+
     @staticmethod
     def extractXy_pointWise(query_url_file, query_url_relevance_file):
         X = []
@@ -22,19 +47,7 @@ class DocUtils(object):
           query_tf = np.array(query.query_tf_vector)
           
           for page in query.pages:
-            url_tf    = np.array(page.get_field_tf('url',query.terms))
-            title_tf  = np.array(page.get_field_tf('title',query.terms))
-            header_tf = np.array(page.get_field_tf('header',query.terms))
-            body_tf   = np.array(page.get_field_tf('body',query.terms))
-            anchor_tf = np.array(page.get_field_tf('anchor',query.terms))
-            
-            x_row = np.array([np.dot(query_tf,url_tf),
-                              np.dot(query_tf,title_tf),
-                              np.dot(query_tf,header_tf),
-                              np.dot(query_tf,body_tf),
-                              np.dot(query_tf,anchor_tf)])
-            
-            X.append(x_row)
+            X.append(DocUtils.compute_x_row(query.terms,query_tf,page))
             y.append(relevances[query.string][page.url])
             
         return (X,y)
@@ -53,37 +66,32 @@ class DocUtils(object):
         
         for query in queryObjects:
           query_tf = np.array(query.query_tf_vector)
-          #print >> sys.stderr, "query: " + query.string
-          #print >> sys.stderr, "query_terms: " + str(query.terms)
-          #print >> sys.stderr, "query_tf: " + str(query_tf)
           queries.append(query.string)
           X_index_map[query.string] = {}
           
           for page in query.pages:
-            url_tf    = np.array(page.get_field_tf('url',query.terms))
-            #print >> sys.stderr, "url_tf: " + str(url_tf)
-            title_tf  = np.array(page.get_field_tf('title',query.terms))
-            #print >> sys.stderr, "title_tf: " + str(title_tf)            
-            header_tf = np.array(page.get_field_tf('header',query.terms))
-            #print >> sys.stderr, "header_tf: " + str(header_tf)            
-            body_tf   = np.array(page.get_field_tf('body',query.terms))
-            #print >> sys.stderr, "body_tf: " + str(body_tf)            
-            anchor_tf = np.array(page.get_field_tf('anchor',query.terms))
-            #print >> sys.stderr, "anchor_tf: " + str(anchor_tf)            
-            
-            x_row = np.array([np.dot(query_tf,url_tf),
-                              np.dot(query_tf,title_tf),
-                              np.dot(query_tf,header_tf),
-                              np.dot(query_tf,body_tf),
-                              np.dot(query_tf,anchor_tf)])
-            
-            X.append(x_row)
+            X.append(DocUtils.compute_x_row(query.terms,query_tf,page))
             X_index_map[query.string][page.url] = count
             count = count + 1
             
         return (X,queries,X_index_map)
 
-    
+    @staticmethod
+    def compute_x_row(query_terms, query_tf, page):
+        url_tf    = np.array(page.get_field_tf('url',query_terms))
+        title_tf  = np.array(page.get_field_tf('title',query_terms))
+        header_tf = np.array(page.get_field_tf('header',query_terms))
+        body_tf   = np.array(page.get_field_tf('body',query_terms))
+        anchor_tf = np.array(page.get_field_tf('anchor',query_terms))
+        
+        x_row = np.array([np.dot(query_tf,url_tf),
+                          np.dot(query_tf,title_tf),
+                          np.dot(query_tf,header_tf),
+                          np.dot(query_tf,body_tf),
+                          np.dot(query_tf,anchor_tf)])
+        
+        return x_row
+        
     #inparams
     #  featureFile: input file containing relevances per query-url
     #return value
