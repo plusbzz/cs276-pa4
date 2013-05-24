@@ -2,12 +2,65 @@ from collections import Counter
 import os,sys
 from os import path
 from math import log,exp
+import numpy as np
 import re
 import types
 import cPickle as marshal
 
-
 class DocUtils(object):
+    
+    @staticmethod
+    def extractXy_pointWise(query_url_file, query_url_relevance_file):
+        X = []
+        y = []
+       
+        (q,features) = DocUtils.extractFeatures(query_url_file)
+        queries      = [Query(query,features[query]) for query in features]
+        relevances   = DocUtils.extractRelevances(query_url_relevance_file)        
+        
+        for query in queries:
+          query_tf = np.array(query.query_tf_vector)
+          
+          for page in query.pages:
+            url_tf    = np.array(page.get_field_tf('url',query.terms))
+            title_tf  = np.array(page.get_field_tf('title',query.terms))
+            header_tf = np.array(page.get_field_tf('header',query.terms))
+            body_tf   = np.array(page.get_field_tf('body',query.terms))
+            anchor_tf = np.array(page.get_field_tf('anchor',query.terms))
+            
+            x_row = np.array([np.dot(query_tf,url_tf),
+                              np.dot(query_tf,title_tf),
+                              np.dot(query_tf,header_tf),
+                              np.dot(query_tf,body_tf),
+                              np.dot(query_tf,anchor_tf)])
+            
+            X.append(x_row)
+            y.append(relevances[query.string][page.url])
+            
+        return (X,y)
+    
+    #inparams
+    #  featureFile: input file containing relevances per query-url
+    #return value
+    #  relevances: map containing relevances for each (query, url) pair
+    @staticmethod
+    def extractRelevances(relevanceFile):
+        f = open(relevanceFile, 'r')
+        relevances = {}
+    
+        for line in f:
+          key = line.split(':', 1)[0].strip()
+          value = line.split(':', 1)[-1].strip()
+          if(key == 'query'):
+            query = value
+            relevances[query] = {}
+          elif(key == 'url'):
+            url = value.split(' ', 1)[0].strip()
+            relevance = value.split(' ', 1)[-1].strip()
+            relevances[query][url] = float(relevance)
+            
+        return relevances
+    
     '''Container class for utility static methods'''
     #inparams
     #  featureFile: input file containing queries and url features
@@ -79,7 +132,7 @@ class DocUtils(object):
     def body_tf_vector(body_hits):
         tf = {}
         for bh in body_hits:
-            tf[bh] = len(body_hits[bh])     
+            tf[bh] = float(len(body_hits[bh]))
         return tf
 
     @staticmethod
@@ -134,8 +187,6 @@ class Page(object):
             tf.append( 0 if term not in tfs[field_name] else tfs[field_name][term])
             
         return tf
-        
-    
     
 class Anchor(object):
     '''Properties of a single anchor text chunk'''
@@ -149,10 +200,7 @@ class Query(object):
     '''A single query, with all the results associated with it'''
 
     def __init__(self,query,query_pages,corpus=None):  # query_pages : query -> urls
-        self.query = query
-
-        self.terms = self.query.lower().strip().split()
-        self.query_tf_vector = DocUtils.compute_tf_vector(self.terms)
-        
+        self.string = query
+        self.terms = self.string.lower().strip().split()
+        self.query_tf_vector = [v for k,v in DocUtils.compute_tf_vector(self.terms).iteritems()]
         self.pages = [Page(p,v) for p,v in query_pages.iteritems()]
-        
