@@ -6,32 +6,48 @@ import numpy as np
 import re
 import types
 import cPickle as marshal
+from sklearn import preprocessing
+from itertools import combinations
 
 class DocUtils(object):
     @staticmethod
-    def extractXy_pairwise(query_url_file, query_url_relevance_file):
-        X = []
-        y = []
-       
+    def extractXy_pairWise(query_url_file, query_url_relevance_file):
+        X_p = []
+        y_p = []
+        # Scale
         (q,features) = DocUtils.extractFeatures(query_url_file)
         queries      = [Query(query,features[query]) for query in features]
         relevances   = DocUtils.extractRelevances(query_url_relevance_file)        
         
+        query_indices = {}
+        count = 0
         for query in queries:
-            X_q = []
-            y_q = []
+            query_indices[query] = set()
             query_tf = np.array(query.query_tf_vector)
           
             for page in query.pages:
-              X_q.append(DocUtils.compute_x_row(query.terms,query_tf,page))
-              y_q.append(relevances[query.string][page.url])
-            
+                xrow = DocUtils.compute_x_row(query.terms,query_tf,page)
+                yrow = relevances[query.string][page.url]
+                X_p.append(xrow)
+                y_p.append(yrow)
+                query_indices[query].add(count)
+                count += 1
+     
+        
+        X_p = preprocessing.scale(X_p)
+        X = []
+        y = []
+        
+        for query in queries:
+            indices = query_indices[query]       
             # Now do the pairwise
-            for i,j in combinations(xrange(len(y)),2):
-                if y_q[i] != y_q[j]:
-                    X.append(X_q[i] - X_q[j])
-                    y.append(1 if y_q[i] > y_q[j] else -1)
+            for i,j in combinations(indices,2):
+                if y_p[i] != y_p[j]:
+                    X.append(X_p[i] - X_p[j])
+                    y.append(1 if y_p[i] > y_p[j] else -1)
+        
         return (X,y)
+  
   
 
     @staticmethod
@@ -89,7 +105,7 @@ class DocUtils(object):
                           np.dot(query_tf,header_tf),
                           np.dot(query_tf,body_tf),
                           np.dot(query_tf,anchor_tf)])
-        
+                    
         return x_row
         
     #inparams

@@ -6,6 +6,7 @@ import math
 import re
 import numpy as np
 from sklearn import linear_model, svm
+from sklearn import preprocessing
 from doc_utils import DocUtils, Query
 
 ###############################
@@ -14,18 +15,14 @@ from doc_utils import DocUtils, Query
 def pointwise_train_features(train_data_file, train_rel_file):
   X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file)
   
-  #print >> sys.stderr, "X: ", str(X)
-  #print >> sys.stderr, "y: ", str(y)
+  print >> sys.stderr, "X: ", str(X)
+  print >> sys.stderr, "y: ", str(y)
 
   return (X, y)
  
 def pointwise_test_features(test_data_file):
   # stub, you need to implement
   X,queries,index_map = DocUtils.extractX_pointWise(test_data_file)
-  
-  #print >> sys.stderr, "X: ", str(X)
-  #print >> sys.stderr, "queries: ", str(queries)
-  #print >> sys.stderr, "index_map: ", str(index_map)
 
   return (X, queries, index_map)
  
@@ -46,10 +43,13 @@ def pointwise_testing(X, model):
 ##### Pair-wise approach #####
 ##############################
 def pairwise_train_features(train_data_file, train_rel_file):
-  X = [[0, 0], [1, 1], [2, 2]]
-  y = [0, 1, 2]
-  return (X, y)
+  X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file)
+  
+  print >> sys.stderr, "X: ", str(X)
+  print >> sys.stderr, "y: ", str(y)
 
+  return (X, y)
+ 
 def pairwise_test_features(test_data_file):
   # stub, you need to implement
   X = [[0.5, 0.5], [1.5, 1.5]]  
