@@ -251,8 +251,8 @@ class Query(object):
         
         tf_vector_dict = DocUtils.compute_tf_vector(raw_terms)
         
-        self.terms           = []
-        self.query_tf_vector = []
+        self.terms           = [] # it does not include repeated terms
+        self.query_tf_vector = [] # raw frequency of each term in the query string
         
         for k,v in tf_vector_dict.iteritems():
             self.terms.append(k)
