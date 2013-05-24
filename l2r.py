@@ -6,12 +6,28 @@ import math
 import re
 import numpy as np
 from sklearn import linear_model, svm
+from doc_utils import DocUtils
+from doc_utils import Query
 
 ###############################
 ##### Point-wise approach #####
 ###############################
 def pointwise_train_features(train_data_file, train_rel_file):
   # stub, you need to implement
+  (queries,features) = DocUtils.extractFeatures(train_data_file)
+  
+  queries = [Query(query,features[query]) for query in features]
+  
+  for query in queries:
+    for page in query.pages:
+      print page.get_field_tf('url',query.terms)
+      print page.get_field_tf('title',query.terms)
+      print page.get_field_tf('header',query.terms)
+      print page.get_field_tf('body',query.terms)
+      print page.get_field_tf('anchor',query.terms)
+    
+
+  ############# 
   X = [[0, 0], [1, 1], [2, 2]]
   y = [0, 1, 2]
   return (X, y)
@@ -29,6 +45,8 @@ def pointwise_test_features(test_data_file):
 def pointwise_learning(X, y):
   # stub, you need to implement
   model = linear_model.LinearRegression()
+  model.fit(X,y)
+  
   return model
 
 def pointwise_testing(X, model):
