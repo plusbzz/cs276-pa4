@@ -60,6 +60,7 @@ def main(myRankFile, groundTruthFile):
             
     #go through each query of rank file and calculate ndcg
     for (query, results) in getQueries(myRankFile):
+        
       ndcgScore += getNDCG(results, groundTruth[query])
       numQueries += 1
 
