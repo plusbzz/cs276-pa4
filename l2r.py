@@ -7,17 +7,19 @@ import re
 import numpy as np
 from sklearn import linear_model, svm
 from sklearn import preprocessing
-from doc_utils import DocUtils, Query
+from doc_utils import DocUtils, Query, CorpusInfo
+
+corpus = CorpusInfo().load_doc_freqs()
 
 ###############################
 ##### Point-wise approach #####
 ###############################
 def pointwise_train_features(train_data_file, train_rel_file):
-  X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file)
+  X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file,corpus)
   return (X, y)
  
 def pointwise_test_features(test_data_file):
-  X,queries,index_map = DocUtils.extractX_pointWise(test_data_file)
+  X,queries,index_map = DocUtils.extractX_pointWise(test_data_file,corpus)
   return (X, queries, index_map)
  
 def pointwise_learning(X, y):
@@ -33,11 +35,11 @@ def pointwise_testing(X, model):
 ##### Pair-wise approach #####
 ##############################
 def pairwise_train_features(train_data_file, train_rel_file):
-  X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file)
+  X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file,corpus)
   return (X, y)
  
 def pairwise_test_features(test_data_file):
-  X,queries,index_map = DocUtils.extractX_pairWise(test_data_file)
+  X,queries,index_map = DocUtils.extractX_pairWise(test_data_file,corpus)
   return (X, queries, index_map)
 
 def pairwise_learning(X, y):

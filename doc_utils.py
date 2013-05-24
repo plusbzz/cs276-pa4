@@ -34,12 +34,12 @@ class DocUtils(object):
                     print >> outfile, ("  url: " + res)  
 
     @staticmethod
-    def extractXy_pairWise(query_url_file, query_url_relevance_file):
+    def extractXy_pairWise(query_url_file, query_url_relevance_file,corpus=None):
         X_p = []
         y_p = []
-        # Scale
+        
         (q,features) = DocUtils.extractFeatures(query_url_file)
-        queries      = [Query(query,features[query]) for query in features]
+        queries      = [Query(query,features[query],corpus) for query in features]
         relevances   = DocUtils.extractRelevances(query_url_relevance_file)        
         
         query_indices = {}
@@ -72,19 +72,19 @@ class DocUtils(object):
         return (X,y)
   
     @staticmethod
-    def extractX_pairWise(query_url_file):
-        X,queries,X_index_map = DocUtils.extractX_pointWise(query_url_file)
+    def extractX_pairWise(query_url_file,corpus=None):
+        X,queries,X_index_map = DocUtils.extractX_pointWise(query_url_file,corpus)
         # Scale X
         X = preprocessing.scale(X)
         return (X,queries,X_index_map)
 
     @staticmethod
-    def extractXy_pointWise(query_url_file, query_url_relevance_file):
+    def extractXy_pointWise(query_url_file, query_url_relevance_file,corpus=None):
         X = []
         y = []
        
         (q,features) = DocUtils.extractFeatures(query_url_file)
-        queries      = [Query(query,features[query]) for query in features]
+        queries      = [Query(query,features[query],corpus) for query in features]
         relevances   = DocUtils.extractRelevances(query_url_relevance_file)        
         
         for query in queries:
@@ -98,14 +98,14 @@ class DocUtils(object):
 
 
     @staticmethod
-    def extractX_pointWise(query_url_file):
+    def extractX_pointWise(query_url_file,corpus=None):
         X         = []
         queries   = []
         X_index_map = {}
         count     = 0
        
         (q,features) = DocUtils.extractFeatures(query_url_file)
-        queryObjects = [Query(query,features[query]) for query in features]
+        queryObjects = [Query(query,features[query],corpus) for query in features]
         
         for query in queryObjects:
           query_tf = np.array(query.query_tf_vector)
@@ -311,3 +311,43 @@ class Query(object):
         
         #print >> sys.stderr, "query.query_tf_vector: " + str(self.query_tf_vector)
         self.pages = [Page(p,v) for p,v in query_pages.iteritems()]
+
+
+class CorpusInfo(object):
+    '''Represents a corpus, which can be queried for IDF of a term'''
+    def __init__(self,corpus_root_dir=None): # for Laplace smoothing
+        self.corpus_dir = corpus_root_dir
+        self.total_file_count = 1.0
+        self.df_counter = Counter()   # term -> doc_freq
+        
+    def compute_doc_freqs(self):
+        root = self.corpus_dir
+        for d in sorted(os.listdir(root)):
+          print >> sys.stderr, 'processing dir: ' + d
+          dir_name = os.path.join(root, d) 
+          term_doc_list = []
+          
+          for f in sorted(os.listdir(dir_name)):
+            self.total_file_count += 1
+            
+            # Add 'dir/filename' to doc id dictionary
+            file_name = os.path.join(d, f)
+
+            fullpath = os.path.join(dir_name, f)
+            
+            with open(fullpath, 'r') as infile:
+                lines = [line for line in infile.readlines()]
+                tokens = set(reduce(lambda x,line: x+line.strip().split(),lines,[]))   
+                for token in tokens: self.df_counter[token] += 1
+        marshal.dump((self.total_file_count,self.df_counter),open("IDF.dat","wb"))
+    
+    def load_doc_freqs(self):
+        if path.isfile("IDF.dat"):
+            print >> sys.stderr, "Loading IDF from file"
+            self.total_file_count,self.df_counter = marshal.load(open("IDF.dat"))
+        else:
+            print >> sys.stderr, "Computing IDF"
+            self.compute_doc_freqs()
+        
+    def get_IDF(self,term):
+        return log(self.total_file_count) - log(self.df_counter[term]+1.0) # for Laplace smoothing
