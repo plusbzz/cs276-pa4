@@ -10,6 +10,29 @@ from sklearn import preprocessing
 from itertools import combinations
 
 class DocUtils(object):
+
+    @staticmethod    
+    def getRankedQueries(queries,index_map,y):
+        rankedQueries = {}
+        for query in queries:
+          results = [url for url in index_map[query] ]
+          rankedQueries[query] = sorted(results, key = lambda url: y[index_map[query][url]], reverse = True)
+    
+        return rankedQueries
+        
+    #inparams
+    #  queries: contains ranked list of results for each query
+    #  outputFile: output file name
+    @staticmethod
+    def printRankedResults(queries,outFileName):
+        with open(outFileName,"wb") as outfile:
+            for query in queries:
+                print("query: " + query)
+                print >> outfile, ("query: " + query)
+                for res in queries[query]:
+                    print("  url: " + res)                
+                    print >> outfile, ("  url: " + res)  
+
     @staticmethod
     def extractXy_pairWise(query_url_file, query_url_relevance_file):
         X_p = []
@@ -76,8 +99,6 @@ class DocUtils(object):
 
     @staticmethod
     def extractX_pointWise(query_url_file):
-        print >> sys.stderr, "TEST FILE: ", str(query_url_file)
-
         X         = []
         queries   = []
         X_index_map = {}

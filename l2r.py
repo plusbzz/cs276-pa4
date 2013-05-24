@@ -122,18 +122,10 @@ def test(test_data_file, model, task):
     X = [[0.5, 0.5], [1.5, 1.5]]  
     y = model.predict(X)
   
-  # some debug output
-  for query in queries:
-    print "query: "+query
-    results = sorted([(url,y[index_map[query][url]]) for url in index_map[query]],
-                        key=lambda tup: tup[1], reverse=True)
-    for url,value in results:
-      print "  url: "+url
-      
-      print >> sys.stderr, "Query:", query, ", url:", url, ", value:", value
-
   # Step (3): output your ranking result to stdout in the format that will be scored by the ndcg.py code
-
+  rankedQueries = DocUtils.getRankedQueries(queries,index_map,y)
+  DocUtils.printRankedResults(rankedQueries,"ranked.txt")
+  
 if __name__ == '__main__':
   sys.stderr.write('# Input arguments: %s\n' % str(sys.argv))
   
