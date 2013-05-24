@@ -46,9 +46,10 @@ def pairwise_learning(X, y):
   return model
 
 def pairwise_testing(X, model):
-  weights = model.coef_.T
-  y = np.dot(X,weights)
-  return y
+  weights = model.coef_/np.linalg.norm(model.coef_)
+  weights = preprocessing.scale(weights.T)
+  y = np.dot(X,weights).T
+  return y[0]
 
 ####################
 ##### Training #####
@@ -123,8 +124,13 @@ def test(test_data_file, model, task):
   
   # some debug output
   for query in queries:
-    for url in index_map[query]:
-      print >> sys.stderr, "Query:", query, ", url:", url, ", value:", y[index_map[query][url]]
+    print "query: "+query
+    results = sorted([(url,y[index_map[query][url]]) for url in index_map[query]],
+                        key=lambda tup: tup[1], reverse=True)
+    for url,value in results:
+      print "  url: "+url
+      
+      print >> sys.stderr, "Query:", query, ", url:", url, ", value:", value
 
   # Step (3): output your ranking result to stdout in the format that will be scored by the ndcg.py code
 
