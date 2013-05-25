@@ -254,7 +254,17 @@ class DocUtils(object):
         for w in otf:
             tf[w] = (1 + log(otf[w])) if otf[w] > 0 else 0
         return tf
-        
+    
+    @staticmethod
+    def IDFy(otf,corpus = None):
+        tf = {}
+        if corpus is not None:
+            for w in otf:
+                tf[w] = otf[w]*corpus.get_IDF(w)
+            return tf
+        else:
+            return otf
+            
        
 class Page(object):
     
@@ -308,9 +318,9 @@ class Query(object):
     def __init__(self,query,query_pages,corpus=None):  # query_pages : query -> urls
         self.string = query
         raw_terms = self.string.lower().strip().split() # it may include repeated terms
-        #print >> sys.stderr, "query.terms: " + str(raw_terms)
+        #print >> sys.stderr, "query.terms: " + str(raw_terms),"corpus",corpus
         
-        tf_vector_dict = DocUtils.compute_tf_vector(raw_terms)
+        tf_vector_dict = DocUtils.IDFy(DocUtils.compute_tf_vector(raw_terms),corpus)
         
         self.terms           = [] # it does not include repeated terms
         self.query_tf_vector = [] # raw frequency of each term in the query string
@@ -355,9 +365,12 @@ class CorpusInfo(object):
         if path.isfile("IDF.dat"):
             print >> sys.stderr, "Loading IDF from file"
             self.total_file_count,self.df_counter = marshal.load(open("IDF.dat"))
+            print >> sys.stderr, "Size of corpus",len(self.df_counter)
         else:
             print >> sys.stderr, "Computing IDF"
             self.compute_doc_freqs()
         
     def get_IDF(self,term):
-        return log(self.total_file_count) - log(self.df_counter[term]+1.0) # for Laplace smoothing
+        idf = log(self.total_file_count)-log(self.df_counter[term]+1.0)
+        #print >> sys.stderr, "IDF of term:",term,"is",idf
+        return idf # for Laplace smoothing

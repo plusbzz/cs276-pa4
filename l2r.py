@@ -9,7 +9,8 @@ from sklearn import linear_model, svm
 from sklearn import preprocessing
 from doc_utils import DocUtils, Query, CorpusInfo
 
-corpus = CorpusInfo().load_doc_freqs()
+corpus = CorpusInfo()
+corpus.load_doc_freqs()
 
 ###############################
 ##### Point-wise approach #####
