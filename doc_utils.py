@@ -245,7 +245,17 @@ class DocUtils(object):
                 if term not in tf: tf[term] = 0.0
                 tf[term] += atf[term]
         return tf
-   
+    
+    NORMALIZE=True
+    @staticmethod
+    def normalize(otf,length):
+        if not DocUtils.NORMALIZE: return otf
+        length=float(length)
+        tf = {}
+        for w in otf:
+            tf[w] = otf[w]/length
+        return tf
+               
     LOGIFY=True
     @staticmethod
     def logify(otf):
@@ -255,16 +265,16 @@ class DocUtils(object):
             tf[w] = (1 + log(otf[w])) if otf[w] > 0 else 0
         return tf
     
+    IDFY=True
     @staticmethod
     def IDFy(otf,corpus = None):
+        if not DocUtils.IDFY: return otf
+        if corpus is None: return otf
         tf = {}
-        if corpus is not None:
-            for w in otf:
-                tf[w] = otf[w]*corpus.get_IDF(w)
-            return tf
-        else:
-            return otf
-            
+        for w in otf:
+            tf[w] = otf[w]*corpus.get_IDF(w)
+        return tf
+
        
 class Page(object):
     
@@ -275,7 +285,7 @@ class Page(object):
         self.url = page
          
         self.body_length = page_fields.get('body_length',1.0)
-        self.body_length = max(1000.0,self.body_length) #(500.0 if self.body_length == 0 else self.body_length)
+        self.body_length = max(1750.0,self.body_length) #(500.0 if self.body_length == 0 else self.body_length)
         
         self.pagerank         = page_fields.get('pagerank',0)
         self.title            = page_fields.get('title',"")
@@ -289,7 +299,7 @@ class Page(object):
         tfs = {}
         tfs['url']      = DocUtils.logify(DocUtils.url_tf_vector(self.url))
         tfs['header']   = DocUtils.logify(DocUtils.header_tf_vector(self.header))
-        tfs['body']     = DocUtils.logify(DocUtils.body_tf_vector(self.body_hits))   
+        tfs['body']     = DocUtils.logify(DocUtils.normalize(DocUtils.body_tf_vector(self.body_hits),self.body_length))  
         tfs['title']    = DocUtils.logify(DocUtils.title_tf_vector(self.title))
         tfs['anchor']   = DocUtils.logify(DocUtils.anchor_tf_vector(self.anchors))
         
