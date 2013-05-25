@@ -245,7 +245,17 @@ class DocUtils(object):
                 if term not in tf: tf[term] = 0.0
                 tf[term] += atf[term]
         return tf
-    
+   
+    LOGIFY=True
+    @staticmethod
+    def logify(otf):
+        if not DocUtils.LOGIFY: return otf
+        tf = {}
+        for w in otf:
+            tf[w] = (1 + log(otf[w])) if otf[w] > 0 else 0
+        return tf
+        
+       
 class Page(object):
     
     fields = ['url','header','body','anchor','title']
@@ -267,11 +277,11 @@ class Page(object):
 
     def compute_field_tf_vectors(self):
         tfs = {}
-        tfs['url']      = DocUtils.url_tf_vector(self.url)
-        tfs['header']   = DocUtils.header_tf_vector(self.header)
-        tfs['body']     = DocUtils.body_tf_vector(self.body_hits)   
-        tfs['title']    = DocUtils.title_tf_vector(self.title)
-        tfs['anchor']   = DocUtils.anchor_tf_vector(self.anchors)
+        tfs['url']      = DocUtils.logify(DocUtils.url_tf_vector(self.url))
+        tfs['header']   = DocUtils.logify(DocUtils.header_tf_vector(self.header))
+        tfs['body']     = DocUtils.logify(DocUtils.body_tf_vector(self.body_hits))   
+        tfs['title']    = DocUtils.logify(DocUtils.title_tf_vector(self.title))
+        tfs['anchor']   = DocUtils.logify(DocUtils.anchor_tf_vector(self.anchors))
         
         return tfs
     
