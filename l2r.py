@@ -7,20 +7,22 @@ import re
 import numpy as np
 from sklearn import linear_model, svm
 from sklearn import preprocessing
-from doc_utils import DocUtils, Query, CorpusInfo
+from doc_utils import DocUtils, Query, CorpusInfo, ExtraFeaturesInfo
 
 corpus = CorpusInfo()
 corpus.load_doc_freqs()
 
+extraFeaturesInfo = ExtraFeaturesInfo() 
+
 ###############################
 ##### Point-wise approach #####
 ###############################
-def pointwise_train_features(train_data_file, train_rel_file):
-  X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file,corpus)
+def pointwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo=None):
+  X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file, corpus, extraFeaturesInfo)
   return (X, y)
  
-def pointwise_test_features(test_data_file):
-  X,queries,index_map = DocUtils.extractX_pointWise(test_data_file,corpus)
+def pointwise_test_features(test_data_file, extraFeaturesInfo=None):
+  X,queries,index_map = DocUtils.extractX_pointWise(test_data_file, corpus, extraFeaturesInfo)
   return (X, queries, index_map)
  
 def pointwise_learning(X, y):
@@ -36,11 +38,11 @@ def pointwise_testing(X, model):
 ##### Pair-wise approach #####
 ##############################
 def pairwise_train_features(train_data_file, train_rel_file):
-  X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file,corpus)
+  X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file, corpus)
   return (X, y)
  
 def pairwise_test_features(test_data_file):
-  X,queries,index_map = DocUtils.extractX_pairWise(test_data_file,corpus)
+  X,queries,index_map = DocUtils.extractX_pairWise(test_data_file, corpus)
   return (X, queries, index_map)
 
 def pairwise_learning(X, y):
@@ -75,7 +77,13 @@ def train(train_data_file, train_rel_file, task):
   elif task == 3: 
     # Add more features
     print >> sys.stderr, "Task 3\n"
-
+    
+    # Step (1): construct your feature and label arrays here
+    (X, y) = pointwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo)
+    
+    # Step (2): implement your learning algorithm here
+    model = pointwise_learning(X, y)
+    
   elif task == 4: 
     # Extra credit 
     print >> sys.stderr, "Extra Credit\n"
@@ -114,6 +122,13 @@ def test(test_data_file, model, task):
   elif task == 3: 
     # Add more features
     print >> sys.stderr, "Task 3\n"
+    
+    # Step (1): construct your test feature arrays here
+    (X, queries, index_map) = pointwise_test_features(test_data_file, extraFeaturesInfo)
+    
+    # Step (2): implement your prediction code here
+    y = pointwise_testing(X, model)
+    
 
   elif task == 4: 
     # Extra credit 

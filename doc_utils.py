@@ -73,13 +73,13 @@ class DocUtils(object):
   
     @staticmethod
     def extractX_pairWise(query_url_file,corpus=None):
-        X,queries,X_index_map = DocUtils.extractX_pointWise(query_url_file,corpus)
+        X,queries,X_index_map = DocUtils.extractX_pointWise(query_url_file, corpus)
         # Scale X
         X = preprocessing.scale(X)
         return (X,queries,X_index_map)
 
     @staticmethod
-    def extractXy_pointWise(query_url_file, query_url_relevance_file,corpus=None):
+    def extractXy_pointWise(query_url_file, query_url_relevance_file, corpus=None, extraFeaturesInfo=None):
         X = []
         y = []
        
@@ -91,18 +91,24 @@ class DocUtils(object):
           query_tf = np.array(query.query_tf_vector)
           
           for page in query.pages:
-            X.append(DocUtils.compute_x_row(query.terms,query_tf,page))
+            x_row_features = DocUtils.compute_x_row(query.terms,query_tf,page)
+            
+            if extraFeaturesInfo:
+                x_row_extra_features = DocUtils.compute_x_row_extra_features(query.string, page, extraFeaturesInfo)
+                x_row_features       = np.append(x_row_features, x_row_extra_features)
+            
+            X.append(x_row_features)
             y.append(relevances[query.string][page.url])
             
         return (X,y)
 
 
     @staticmethod
-    def extractX_pointWise(query_url_file,corpus=None):
-        X         = []
-        queries   = []
+    def extractX_pointWise(query_url_file, corpus=None, extraFeaturesInfo=None):
+        X           = []
+        queries     = []
         X_index_map = {}
-        count     = 0
+        count       = 0
        
         (q,features) = DocUtils.extractFeatures(query_url_file)
         queryObjects = [Query(query,features[query],corpus) for query in features]
@@ -113,7 +119,15 @@ class DocUtils(object):
           X_index_map[query.string] = {}
           
           for page in query.pages:
-            X.append(DocUtils.compute_x_row(query.terms,query_tf,page))
+            x_row_features = DocUtils.compute_x_row(query.terms,query_tf,page)
+            
+            if extraFeaturesInfo:
+                x_row_extra_features = DocUtils.compute_x_row_extra_features(query.string, page, extraFeaturesInfo)
+                x_row_features       = np.append(x_row_features, x_row_extra_features)
+                
+            X.append(x_row_features)
+            print >> sys.stderr, "Test: ", x_row_features
+            #X.append(DocUtils.compute_x_row(query.terms,query_tf,page))
             X_index_map[query.string][page.url] = count
             count = count + 1
             
@@ -134,6 +148,23 @@ class DocUtils(object):
                           np.dot(query_tf,anchor_tf)])
                     
         return x_row
+    
+    @staticmethod
+    def compute_x_row_extra_features(query_string, page, extraFeaturesInfo=None):
+        extra_features = np.array([])
+        
+        isPDF       = 1. if page.url.endswith(".pdf") else 0.
+        pagerank    = float(page.pagerank)
+        
+        extra_features = np.append(extra_features, [isPDF, pagerank])
+
+        if extraFeaturesInfo:        
+            bm25f_score = float(extraFeaturesInfo.bm25f_scores[query_string][page.url])
+            extra_features = np.append(extra_features, bm25f_score)
+            
+        
+        return extra_features
+    
         
     #inparams
     #  featureFile: input file containing relevances per query-url
@@ -342,6 +373,18 @@ class Query(object):
         #print >> sys.stderr, "query.query_tf_vector: " + str(self.query_tf_vector)
         self.pages = [Page(p,v) for p,v in query_pages.iteritems()]
 
+
+class ExtraFeaturesInfo(object):
+    '''A description of the ExtraFeatures to be used in the classification'''
+    
+    def __init__(self):
+        self.usePDF       = True
+        self.usePagerank  = True
+        self.useBM25F     = True
+    
+        extractScores     = DocUtils.extractRelevances  # bm25f scores file has same format as relevances file
+        self.bm25f_scores = extractScores("pa3_bm25f_scores.txt")        
+    
 
 class CorpusInfo(object):
     '''Represents a corpus, which can be queried for IDF of a term'''
