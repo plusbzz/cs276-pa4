@@ -126,7 +126,7 @@ class DocUtils(object):
                 x_row_features       = np.append(x_row_features, x_row_extra_features)
                 
             X.append(x_row_features)
-            print >> sys.stderr, "Test: ", x_row_features
+            #print >> sys.stderr, "Test: ", x_row_features
             #X.append(DocUtils.compute_x_row(query.terms,query_tf,page))
             X_index_map[query.string][page.url] = count
             count = count + 1
@@ -155,8 +155,12 @@ class DocUtils(object):
         
         isPDF       = 1. if page.url.endswith(".pdf") else 0.
         pagerank    = float(page.pagerank)
+        urltoks     = float(len(page.field_tf_vectors['url']))
+        tittoks     = float(len(page.field_tf_vectors['title']))
+        hasQ        = 1.0 if '?' in page.url else 0.
         
-        extra_features = np.append(extra_features, [isPDF, pagerank])
+        
+        extra_features = np.append(extra_features, [isPDF, pagerank,urltoks,tittoks])
 
         if extraFeaturesInfo:        
             bm25f_score = float(extraFeaturesInfo.bm25f_scores[query_string][page.url])
@@ -312,9 +316,9 @@ class Page(object):
     fields = ['url','header','body','anchor','title']
     
     '''Represents a single web page, with all its fields. Contains TF vectors for the fields'''
-    def __init__(self,page,page_fields):
-        self.url = page
-         
+    def __init__(self,page,page_fields,corpus = None):
+        self.corpus = corpus                
+        self.url = page        
         self.body_length = page_fields.get('body_length',1.0)
         self.body_length = max(1750.0,self.body_length) 
         self.pagerank         = page_fields.get('pagerank',0)
@@ -323,7 +327,6 @@ class Page(object):
         self.body_hits        = page_fields.get('body_hits',{})
         self.anchors          = [Anchor(text,count) for text,count in page_fields.get('anchors',{}).iteritems()]
         self.field_tf_vectors = self.compute_field_tf_vectors()
-                        
 
     def compute_field_tf_vectors(self):
         tfs = {}
@@ -370,7 +373,7 @@ class Query(object):
             self.query_tf_vector.append(v)
         
         #print >> sys.stderr, "query.query_tf_vector: " + str(self.query_tf_vector)
-        self.pages = [Page(p,v) for p,v in query_pages.iteritems()]
+        self.pages = [Page(p,v,corpus) for p,v in query_pages.iteritems()]
 
 
 class ExtraFeaturesInfo(object):

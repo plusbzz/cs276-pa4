@@ -28,6 +28,15 @@ def pointwise_test_features(test_data_file, extraFeaturesInfo=None):
 def pointwise_learning(X, y):
   model = linear_model.LinearRegression()
   model.fit(X,y)
+  weights = model.coef_/np.linalg.norm(model.coef_)
+  print >> sys.stderr, "Weights:", weights
+  return model
+
+def pointwise_learning_extra(X, y,alpha=0.1):
+  model = linear_model.Lasso(alpha)
+  model.fit(X,y)
+  weights = model.coef_/np.linalg.norm(model.coef_)
+  print >> sys.stderr, "Weights:", weights
   return model
 
 def pointwise_testing(X, model):
@@ -48,6 +57,8 @@ def pairwise_test_features(test_data_file):
 def pairwise_learning(X, y):
   model = svm.SVC(kernel='linear', C=1.0)
   model.fit(X,y)
+  weights = model.coef_/np.linalg.norm(model.coef_)
+  print >> sys.stderr, "Weights:", weights
   return model
 
 def pairwise_testing(X, model):
@@ -87,6 +98,11 @@ def train(train_data_file, train_rel_file, task):
   elif task == 4: 
     # Extra credit 
     print >> sys.stderr, "Extra Credit\n"
+    # Step (1): construct your feature and label arrays here
+    (X, y) = pointwise_train_features(train_data_file, train_rel_file)
+    
+    # Step (2): implement your learning algorithm here
+    model = pointwise_learning_extra(X, y)
 
   else: 
     X = [[0, 0], [1, 1], [2, 2]]
@@ -94,9 +110,6 @@ def train(train_data_file, train_rel_file, task):
     model = linear_model.LinearRegression()
     model.fit(X, y)
   
-  # some debug output
-  weights = model.coef_
-  print >> sys.stderr, "Weights:", str(weights)
 
   return model 
 
@@ -133,6 +146,11 @@ def test(test_data_file, model, task):
   elif task == 4: 
     # Extra credit 
     print >> sys.stderr, "Extra credit\n"
+    # Step (1): construct your test feature arrays here
+    (X, queries, index_map) = pointwise_test_features(test_data_file)
+    
+    # Step (2): implement your prediction code here
+    y = pointwise_testing(X, model)
 
   else:
     queries = ['query1', 'query2']
