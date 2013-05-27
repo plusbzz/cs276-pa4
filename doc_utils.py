@@ -285,8 +285,7 @@ class Page(object):
         self.url = page
          
         self.body_length = page_fields.get('body_length',1.0)
-        self.body_length = max(1750.0,self.body_length) #(500.0 if self.body_length == 0 else self.body_length)
-        
+        self.body_length = max(1750.0,self.body_length) 
         self.pagerank         = page_fields.get('pagerank',0)
         self.title            = page_fields.get('title',"")
         self.header           = page_fields.get('header',"")
