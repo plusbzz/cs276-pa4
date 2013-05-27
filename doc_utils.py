@@ -174,7 +174,9 @@ class DocUtils(object):
         if extraFeaturesInfo:        
             bm25f_score = float(extraFeaturesInfo.bm25f_scores[query_string][page.url])
             extra_features = np.append(extra_features, bm25f_score)
-            
+            # url_ws,title_ws,header_ws,body_ws,anchor_ws
+            window_sizes = extraFeaturesInfo.window_sizes[query_string][page.url][3]
+            extra_features = np.append(extra_features, window_sizes)
         
         return extra_features
     
@@ -200,6 +202,31 @@ class DocUtils(object):
             relevances[query][url] = float(relevance)
             
         return relevances
+
+    #inparams
+    #  featureFile: input file containing window sizes per query-url
+    #return value
+    #  relevances: map containing window sizes for each (query, url) pair
+    @staticmethod
+    def extractWindowSizes(windowSizesFile):
+        f = open(windowSizesFile, 'r')
+        windowSizes = {}
+    
+        for line in f:
+          key = line.split(':', 1)[0].strip()
+          value = line.split(':', 1)[-1].strip()
+          if(key == 'query'):
+            query = value
+            windowSizes[query] = {}
+          elif(key == 'url'):
+            url = value.split(' ', 1)[0].strip()
+            # [url_windowSize, title_windowSize, header_windowSize, body_windowSize, anchor_windowSize]
+            windowSizeList = [int(i) for i in value.split(' ', 1)[-1].strip().split(" ")]
+            windowSizes[query][url] = windowSizeList
+            
+        return windowSizes
+
+
     
     '''Container class for utility static methods'''
     #inparams
@@ -394,7 +421,8 @@ class ExtraFeaturesInfo(object):
         self.useBM25F     = True
     
         extractScores     = DocUtils.extractRelevances  # bm25f scores file has same format as relevances file
-        self.bm25f_scores = extractScores("pa3_bm25f_scores.txt")        
+        self.bm25f_scores = extractScores("pa3_bm25f_scores.txt")
+        self.window_sizes = DocUtils.extractWindowSizes("pa3_window_sizes.txt")
     
 
 class CorpusInfo(object):
