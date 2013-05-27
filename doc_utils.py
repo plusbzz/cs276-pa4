@@ -159,8 +159,17 @@ class DocUtils(object):
         tittoks     = float(len(page.field_tf_vectors['title']))
         hasQ        = 1.0 if '?' in page.url else 0.
         
+        urlranks = 0
+        urltokens = filter(lambda x: len(x) > 0,re.split('\W',page.url))
+        queries = query_string.strip().split()
+        for q in queries:
+            try:
+                urlranks += (urltokens.index(q)+1)
+            except:
+                pass
+                
         
-        extra_features = np.append(extra_features, [isPDF, pagerank,urltoks,tittoks])
+        extra_features = np.append(extra_features, [isPDF, pagerank,urltoks,tittoks,urlranks])
 
         if extraFeaturesInfo:        
             bm25f_score = float(extraFeaturesInfo.bm25f_scores[query_string][page.url])
