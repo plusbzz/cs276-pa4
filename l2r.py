@@ -8,6 +8,7 @@ import numpy as np
 from sklearn import linear_model, svm
 from sklearn import preprocessing
 from doc_utils import DocUtils, Query, CorpusInfo, ExtraFeaturesInfo
+from pa3_utils import Pa3Utils
 
 corpus = CorpusInfo()
 corpus.load_doc_freqs()
@@ -17,7 +18,7 @@ extraFeaturesInfo = ExtraFeaturesInfo()
 ###############################
 ##### Point-wise approach #####
 ###############################
-def pointwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo=None):
+def pointwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo=None):    
   X,y = DocUtils.extractXy_pointWise(train_data_file, train_rel_file, corpus, extraFeaturesInfo)
   return (X, y)
  
@@ -88,13 +89,13 @@ def train(train_data_file, train_rel_file, task):
   elif task == 3: 
     # Add more features
     print >> sys.stderr, "Task 3\n"
-    
+
     # Step (1): construct your feature and label arrays here
+    extraFeaturesInfo.load("pa3_bm25f_scores.txt", "pa3_window_sizes.txt")
     (X, y) = pointwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo)
     
     # Step (2): implement your learning algorithm here
     model = pointwise_learning(X, y)
-    
   elif task == 4: 
     # Extra credit 
     print >> sys.stderr, "Extra Credit\n"
@@ -136,12 +137,21 @@ def test(test_data_file, model, task):
     # Add more features
     print >> sys.stderr, "Task 3\n"
     
+    # Generating BM25F and WindowSizes for test_data_file
+    
+    bm25f_scores_output_file = "bm25f_scores.txt"
+    Pa3Utils.generateBM25FScoreFile(test_data_file, bm25f_scores_output_file, corpus)
+    
+    window_sizes_output_file = "window_sizes.txt"
+    Pa3Utils.generateWindowSizesFile(test_data_file, window_sizes_output_file, corpus)    
+    
+    extraFeaturesInfo.load(bm25f_scores_output_file, window_sizes_output_file)
+    
     # Step (1): construct your test feature arrays here
     (X, queries, index_map) = pointwise_test_features(test_data_file, extraFeaturesInfo)
     
     # Step (2): implement your prediction code here
     y = pointwise_testing(X, model)
-    
 
   elif task == 4: 
     # Extra credit 

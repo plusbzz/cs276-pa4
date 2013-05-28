@@ -127,7 +127,6 @@ class DocUtils(object):
                 
             X.append(x_row_features)
             #print >> sys.stderr, "Test: ", x_row_features
-            #X.append(DocUtils.compute_x_row(query.terms,query_tf,page))
             X_index_map[query.string][page.url] = count
             count = count + 1
             
@@ -150,7 +149,7 @@ class DocUtils(object):
         return x_row
     
     @staticmethod
-    def compute_x_row_extra_features(query_string, page, extraFeaturesInfo=None):
+    def compute_x_row_extra_features(query_string, page, extraFeaturesInfo):
         extra_features = np.array([])
         
         isPDF       = 1. if page.url.endswith(".pdf") else 0.
@@ -167,16 +166,16 @@ class DocUtils(object):
                 urlranks += (urltokens.index(q)+1)
             except:
                 pass
-                
         
         extra_features = np.append(extra_features, [isPDF, pagerank,urltoks,tittoks,urlranks])
 
-        if extraFeaturesInfo:        
-            bm25f_score = float(extraFeaturesInfo.bm25f_scores[query_string][page.url])
-            extra_features = np.append(extra_features, bm25f_score)
-            # url_ws,title_ws,header_ws,body_ws,anchor_ws
-            window_sizes = extraFeaturesInfo.window_sizes[query_string][page.url][3]
-            extra_features = np.append(extra_features, window_sizes)
+        bm25f_score = float(extraFeaturesInfo.bm25f_scores[query_string][page.url])
+        extra_features = np.append(extra_features, bm25f_score)
+        
+        # url_ws,title_ws,header_ws,body_ws,anchor_ws
+        # Just taking body_window_size
+        window_sizes = extraFeaturesInfo.window_sizes[query_string][page.url][3]
+        extra_features = np.append(extra_features, window_sizes)
         
         return extra_features
     
@@ -397,7 +396,6 @@ class Query(object):
     def __init__(self,query,query_pages,corpus=None):  # query_pages : query -> urls
         self.string = query
         raw_terms = self.string.lower().strip().split() # it may include repeated terms
-        #print >> sys.stderr, "query.terms: " + str(raw_terms),"corpus",corpus
         
         tf_vector_dict = DocUtils.IDFy(DocUtils.compute_tf_vector(raw_terms),corpus)
         
@@ -408,22 +406,17 @@ class Query(object):
             self.terms.append(k)
             self.query_tf_vector.append(v)
         
-        #print >> sys.stderr, "query.query_tf_vector: " + str(self.query_tf_vector)
         self.pages = [Page(p,v,corpus) for p,v in query_pages.iteritems()]
 
 
 class ExtraFeaturesInfo(object):
-    '''A description of the ExtraFeatures to be used in the classification'''
+    '''ExtraFeatures to be used in the classification i.e. bm25f scores and field window_sizes'''
     
-    def __init__(self):
-        self.usePDF       = True
-        self.usePagerank  = True
-        self.useBM25F     = True
-    
+    def load(self, bm25fFile, windowSizesFile):
         extractScores     = DocUtils.extractRelevances  # bm25f scores file has same format as relevances file
-        self.bm25f_scores = extractScores("pa3_bm25f_scores.txt")
-        self.window_sizes = DocUtils.extractWindowSizes("pa3_window_sizes.txt")
-    
+        self.bm25f_scores = extractScores(bm25fFile)
+        self.window_sizes = DocUtils.extractWindowSizes(windowSizesFile)
+        
 
 class CorpusInfo(object):
     '''Represents a corpus, which can be queried for IDF of a term'''
