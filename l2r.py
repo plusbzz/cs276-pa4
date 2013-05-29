@@ -33,7 +33,7 @@ def pointwise_learning(X, y):
   print >> sys.stderr, "Weights:", weights
   return model
 
-def pointwise_learning_extra(X, y,alpha=0.1):
+def pointwise_learning_extra(X, y,alpha=1):
   model = linear_model.Lasso(alpha)
   model.fit(X,y)
   weights = model.coef_/np.linalg.norm(model.coef_)
