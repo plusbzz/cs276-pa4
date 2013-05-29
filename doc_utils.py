@@ -172,15 +172,17 @@ class DocUtils(object):
             except:
                 pass
         
-        extra_features = np.append(extra_features, [isPDF, pagerank,urltoks,tittoks,urlranks])
-
         bm25f_score = float(extraFeaturesInfo.bm25f_scores[query_string][page.url])
-        extra_features = np.append(extra_features, bm25f_score)
-        
-        # url_ws,title_ws,header_ws,body_ws,anchor_ws
-        # Just taking body_window_size
         window_sizes = extraFeaturesInfo.window_sizes[query_string][page.url][3]
+
+        extra_features = np.append(extra_features, isPDF)
+        extra_features = np.append(extra_features, pagerank)
         extra_features = np.append(extra_features, window_sizes)
+        extra_features = np.append(extra_features, bm25f_score)
+        extra_features = np.append(extra_features, urltoks)
+        extra_features = np.append(extra_features, tittoks)
+        extra_features = np.append(extra_features, hasQ)
+        #extra_features = np.append(extra_features, urlranks)
         
         return extra_features
     
