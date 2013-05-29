@@ -47,12 +47,12 @@ def pointwise_testing(X, model):
 ##############################
 ##### Pair-wise approach #####
 ##############################
-def pairwise_train_features(train_data_file, train_rel_file):
-  X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file, corpus)
+def pairwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo=None):
+  X,y = DocUtils.extractXy_pairWise(train_data_file, train_rel_file, corpus, extraFeaturesInfo)
   return (X, y)
  
-def pairwise_test_features(test_data_file):
-  X,queries,index_map = DocUtils.extractX_pairWise(test_data_file, corpus)
+def pairwise_test_features(test_data_file, extraFeaturesInfo=None):
+  X,queries,index_map = DocUtils.extractX_pairWise(test_data_file, corpus, extraFeaturesInfo)
   return (X, queries, index_map)
 
 def pairwise_learning(X, y):
@@ -90,12 +90,20 @@ def train(train_data_file, train_rel_file, task):
     # Add more features
     print >> sys.stderr, "Task 3\n"
 
+    ## Step (1): construct your feature and label arrays here
+    #extraFeaturesInfo.load("pa3_bm25f_scores.txt", "pa3_window_sizes.txt")
+    #(X, y) = pointwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo)
+    #
+    ## Step (2): implement your learning algorithm here
+    #model = pointwise_learning(X, y)
+    
     # Step (1): construct your feature and label arrays here
     extraFeaturesInfo.load("pa3_bm25f_scores.txt", "pa3_window_sizes.txt")
-    (X, y) = pointwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo)
+    (X, y) = pairwise_train_features(train_data_file, train_rel_file, extraFeaturesInfo)
     
     # Step (2): implement your learning algorithm here
-    model = pointwise_learning(X, y)
+    model = pairwise_learning(X, y)
+    
   elif task == 4: 
     # Extra credit 
     print >> sys.stderr, "Extra Credit\n"
@@ -148,10 +156,16 @@ def test(test_data_file, model, task):
     extraFeaturesInfo.load(bm25f_scores_output_file, window_sizes_output_file)
     
     # Step (1): construct your test feature arrays here
-    (X, queries, index_map) = pointwise_test_features(test_data_file, extraFeaturesInfo)
+    #(X, queries, index_map) = pointwise_test_features(test_data_file, extraFeaturesInfo)
     
     # Step (2): implement your prediction code here
-    y = pointwise_testing(X, model)
+    #y = pointwise_testing(X, model)
+
+    # Step (1): construct your test feature arrays here
+    (X, queries, index_map) = pairwise_test_features(test_data_file, extraFeaturesInfo)
+    
+    # Step (2): implement your prediction code here
+    y = pairwise_testing(X, model)
 
   elif task == 4: 
     # Extra credit 

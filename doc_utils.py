@@ -34,7 +34,7 @@ class DocUtils(object):
                     print >> outfile, ("  url: " + res)  
 
     @staticmethod
-    def extractXy_pairWise(query_url_file, query_url_relevance_file,corpus=None):
+    def extractXy_pairWise(query_url_file, query_url_relevance_file,corpus=None, extraFeaturesInfo=None):
         X_p = []
         y_p = []
         
@@ -51,6 +51,11 @@ class DocUtils(object):
             for page in query.pages:
                 xrow = DocUtils.compute_x_row(query.terms,query_tf,page)
                 yrow = relevances[query.string][page.url]
+                
+                if extraFeaturesInfo:
+                    xrow_extra_features = DocUtils.compute_x_row_extra_features(query.string, page, extraFeaturesInfo)
+                    xrow                = np.append(xrow, xrow_extra_features)
+                
                 X_p.append(xrow)
                 y_p.append(yrow)
                 query_indices[query].add(count)
@@ -72,8 +77,8 @@ class DocUtils(object):
         return (X,y)
   
     @staticmethod
-    def extractX_pairWise(query_url_file,corpus=None):
-        X,queries,X_index_map = DocUtils.extractX_pointWise(query_url_file, corpus)
+    def extractX_pairWise(query_url_file,corpus=None,extraFeaturesInfo=None):
+        X,queries,X_index_map = DocUtils.extractX_pointWise(query_url_file, corpus, extraFeaturesInfo)
         # Scale X
         X = preprocessing.scale(X)
         return (X,queries,X_index_map)
